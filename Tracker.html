@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Creature</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            height: 50%;
+        }
+        
+        label {
+            font-weight:bold;
+        }
+
+        input {
+            float: right;
+            width: 48%;
+            height: 15px;
+        }
+
+        #btnCreaSchede {
+            width: 100%;
+            height: 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            border-style: double;
+            background-color: white;
+        }
+
+        #btnCreaSchede:hover {
+            width: 100%;
+            height: 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            border-style: double;
+            background-color: lightgrey;
+        }
+
+        #menu {
+            width: 30%;
+            height: 250px;
+            border-style: solid;
+            border-width: 1px;
+            padding: 15px;
+            background-color:blanchedalmond;
+        }
+
+        #creatureList {
+            background-color:blanchedalmond;
+            border: 1px;
+            border-style: solid;
+            width: 65%;
+        }
+        #schedeContainer {
+            
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .creature-card {
+            border: 1px solid #978282;
+            background-color: beige;
+            padding: 5px;
+            margin: 1px;
+            width: 99%;
+            box-sizing: border-box;
+        }
+
+        #btnElimina {
+            width: 100%;
+            height: 25px;
+            font-size: 14px;
+            border-radius: 5px;
+            border-style: double;
+            background-color: white;
+        }
+
+        #btnElimina:hover {
+            width: 100%;
+            height: 25px;
+            font-size: 14px;
+            border-radius: 5px;
+            border-style: double;
+            background-color: lightgrey;
+        }
+        
+        #btnModificaPv {
+            border-radius: 5px;
+            border-style: double;
+            background-color: rgb(109, 226, 109);
+        }
+
+        #btnAddPv:hover {
+            border-radius: 5px;
+            border-style: double;
+            background-color: rgb(72, 173, 72);
+        }
+
+        #btnAddPv {
+            border-radius: 5px;
+            border-style: double;
+            background-color: rgb(109, 226, 109);
+        }
+
+        #btnRemovePv {
+            border-radius: 5px;
+            border-style: double;
+            background-color: rgb(207, 86, 86);
+        }
+
+        #btnRemovePv:hover {
+            border-radius: 5px;
+            border-style: double;
+            background-color: rgb(165, 69, 69);
+        }
+
+        
+        #percentualeVitaContainer {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h2 style="text-align: center; margin-top: 0px">Genera creature</h2>
+        <label>Numero di schede: <input type="number" id="numSchede" min="1"></label>
+        <br><br>
+        <label>Nome Creatura: <input type="text" id="nomeCreatura"></label>
+        <br><br>
+        <label>Classe Armatura (CA): <input type="number" id="classeArmatura" min="1"></label>
+        <br><br>
+        <label>Punti Vita (PV): <input type="number" id="puntiVita" min="1"></label>
+        <br><br>
+        <button id="btnCreaSchede" onclick="creaSchede()">Genera</button>
+        <div style="margin-top: 10px;">
+            <span style="font-weight: bold;">Percentuale di vita totale:</span> <span id="percentualeVita">--%</span>
+        </div>
+    </div>
+    <div id="creatureList">
+        <h2 style="text-align: center;">Creature</h2>
+        <div id="schedeContainer"></div>
+    </div>
+    
+    <script>
+        let creatureCounter = {};
+        let totalMaxPV = 0;
+        let totalCurrentPV = 0;
+
+        function creaSchede() {
+            const numSchede = parseInt(document.getElementById('numSchede').value);
+            const nomeCreatura = document.getElementById('nomeCreatura').value.trim();
+            const classeArmatura = parseInt(document.getElementById('classeArmatura').value);
+            const puntiVita = parseInt(document.getElementById('puntiVita').value);
+            
+            if (!nomeCreatura || isNaN(numSchede) || isNaN(classeArmatura) || isNaN(puntiVita)) {
+                alert("Inserisci tutti i valori correttamente.");
+                return;
+            }
+
+            if (!creatureCounter[nomeCreatura]) {
+                creatureCounter[nomeCreatura] = 1;
+            }
+
+            for (let i = 0; i < numSchede; i++) {
+                let id = `${nomeCreatura}-${creatureCounter[nomeCreatura]}`;
+                let div = document.createElement("div");
+                div.className = "creature-card";
+                div.id = `card-${id}`;
+                div.innerHTML = `
+                    <h3 style="margin:0px">${nomeCreatura} #${creatureCounter[nomeCreatura]}</h3>
+                    <p>CA: ${classeArmatura}</p>
+                    <p style="font-size: 20px;">PV: <span id="pv-${id}">${puntiVita}</span>/<span id="pvMax-${id}">${puntiVita}</span></p>
+                    <button id="btnRemovePv" onclick="modificaPV('${id}', -5)">-5</button>
+                    <button id="btnRemovePv" onclick="modificaPV('${id}', -1)">-1</button>
+                    <button id="btnAddPv" onclick="modificaPV('${id}', 1)">+1</button>
+                    <button id="btnAddPv" onclick="modificaPV('${id}', 5)">+5</button>
+                    <button id="btnRemovePv" onclick="azzeraPV('${id}')">Azzera PV</button>
+                    <button id="btnAddPv" onclick="resetPV('${id}')">Resetta PV</button>
+                    <input style="width: 40px" type="number" id="input-${id}" value="${puntiVita}" min="0" onchange="modificaManualePV('${id}')">
+                    <button id="btnElimina" onclick="eliminaScheda('${id}', ${puntiVita})">Elimina</button>
+                `;
+                document.getElementById("schedeContainer").appendChild(div);
+                creatureCounter[nomeCreatura]++;
+
+                totalMaxPV += puntiVita;
+                totalCurrentPV += puntiVita;
+
+                // Svuota i campi dopo la generazione
+                document.getElementById('numSchede').value = "";
+                document.getElementById('nomeCreatura').value = "";
+                document.getElementById('classeArmatura').value = "";
+                document.getElementById('puntiVita').value = "";
+            }
+            aggiornaPercentualeVita();
+        }
+
+        function modificaPV(id, amount) {
+            let pvElement = document.getElementById(`pv-${id}`);
+            let inputElement = document.getElementById(`input-${id}`);
+            let currentPV = parseInt(pvElement.innerText);
+            let newPV = Math.max(0, currentPV + amount);
+            totalCurrentPV += (newPV - currentPV);
+            pvElement.innerText = newPV;
+            inputElement.value = newPV;
+            aggiornaPercentualeVita();
+            aggiornaStileNome(id, newPV);
+        }
+
+        function modificaManualePV(id) {
+            let pvElement = document.getElementById(`pv-${id}`);
+            let inputElement = document.getElementById(`input-${id}`);
+            let newPV = Math.max(0, parseInt(inputElement.value));
+            let oldPV = parseInt(pvElement.innerText);
+            totalCurrentPV += (newPV - oldPV);
+            pvElement.innerText = newPV;
+            aggiornaPercentualeVita();
+            aggiornaStileNome(id, newPV);
+        }
+
+        function resetPV(id) {
+            let pvElement = document.getElementById(`pv-${id}`);
+            let inputElement = document.getElementById(`input-${id}`);
+            let maxPVElement = document.getElementById(`pvMax-${id}`);
+            
+            if (maxPVElement) {
+                let maxPV = parseInt(maxPVElement.innerText); // Recuperiamo il valore massimo dai dati salvati
+                let currentPV = parseInt(pvElement.innerText);
+                
+                totalCurrentPV += (maxPV - currentPV); // Aggiorniamo il totale dei punti vita
+                pvElement.innerText = maxPV;
+                inputElement.value = maxPV;
+                
+                aggiornaPercentualeVita();
+                aggiornaStileNome(id, maxPV);
+            } else {
+                console.error(`Errore: elemento "pvMax-${id}" non trovato per il reset dei punti vita.`);
+            }
+        }
+
+
+        function azzeraPV(id) {
+            let pvElement = document.getElementById(`pv-${id}`);
+            let inputElement = document.getElementById(`input-${id}`);
+            let currentPV = parseInt(pvElement.innerText);
+            totalCurrentPV -= currentPV; // Rimuoviamo i punti vita attuali dal totale
+            pvElement.innerText = 0;
+            inputElement.value = 0;
+            aggiornaPercentualeVita();
+            aggiornaStileNome(id, 0);
+        }
+
+
+        function aggiornaStileNome(id, pv) {
+            let nameElement = document.getElementById(`card-${id}`).querySelector("h3");
+            if (pv <= 0) {
+                nameElement.style.textDecorationLine = "line-through";
+            } else {
+                nameElement.style.textDecorationLine = "none";
+            }
+        }
+
+        function eliminaScheda(id, maxPV) {
+            let div = document.getElementById(`card-${id}`);
+            let currentPV = parseInt(document.getElementById(`pv-${id}`).innerText);
+            div.remove();
+            totalMaxPV -= maxPV;
+            totalCurrentPV -= currentPV;
+            aggiornaPercentualeVita();
+        }
+
+        function aggiornaPercentualeVita() {
+            if (totalMaxPV > 0) {
+                let percentuale = (totalCurrentPV / totalMaxPV) * 100;
+                document.getElementById("percentualeVita").innerText = Math.round(percentuale) + "%";
+            } else {
+                document.getElementById("percentualeVita").innerText = "--%";
+            }
+        }
+    </script>
+</body>
+</html>
